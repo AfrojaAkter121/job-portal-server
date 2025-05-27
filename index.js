@@ -34,6 +34,37 @@ run().catch(console.dir);
 
 
 const jobsCollection = client.db('jobPortal').collection('jobs');
+const applicationsCollection = client.db('jobPortal').collection('applications');
+
+
+// applications API
+
+app.get('/applications', async(req, res) => {
+    const email = req.query.email;
+
+    const query = {
+      userEmail: email
+    }
+    const result = await applicationsCollection.find(query).toArray();
+
+    // bad way 
+    for(let application of result) {
+        const jobId = application.jobId
+        const jobQuery = {_id: new ObjectId(jobId)};
+        const job = await jobsCollection.findOne(jobQuery);
+        application.company = job.company;
+        application.title = job.title;
+        application.company_logo = job.company_logo;
+    }
+
+    res.send(result);
+})
+
+app.post('/applications', async(req, res) => {
+    const application = req.body;
+    const result = await applicationsCollection.insertOne(application);
+    res.send(result);
+})
 
 // jobs API
 app.get('/jobs', async(req, res) => {
